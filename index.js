@@ -1,6 +1,6 @@
 const winston = require('winston');
 const { createLogger, format, transports } = winston;
-const { combine, timestamp, printf, colorize } = format;
+const { combine, timestamp, printf, colorize, errors } = format;
 
 // Define custom log levels
 const customLevels = {
@@ -21,35 +21,46 @@ const customLevels = {
 };
 
 // Define the log format
-const logFormat = printf(({ level, message, timestamp }) => {
+const logFormat = printf(({ level, message, timestamp, stack }) => {
+  if (stack) {
+    return `[${timestamp}] ${level}: ${message}\n${stack}`;
+  }
   return `[${timestamp}] ${level}: ${message}`;
 });
 
 // Create the logger instance with custom levels and colors
 const logger = createLogger({
   levels: customLevels.levels,
-  format: combine(colorize(), timestamp(), logFormat),
-  transports: [
-    new transports.Console(),
-  ],
+  format: combine(errors({ stack: true }), colorize(), timestamp(), logFormat),
+  transports: [new transports.Console()],
 });
 
-//setting to silly so that all above logs are shown
+// Setting the log level to "silly" so that all log messages are shown
 logger.level = "silly";
 
 logger.log = (level, ...args) => {
-  args = args.map(arg => {
-    try{
-      if(typeof arg === 'object')
-        return JSON.stringify(arg);
-      return arg;
-    } catch(_error){
-      return arg;
+  let message = '';
+  let error;
+
+  args.forEach(arg => {
+    if (arg instanceof Error) {
+      error = arg;
+    } else {
+      if (typeof arg === 'object') {
+        message += JSON.stringify(arg) + ' ';
+      } else {
+        message += arg + ' ';
+      }
     }
   });
 
-  const message = args.join(' ');
-  logger[level](message);
+  if (error) {
+    logger[level](message, error.stack);
+  } else {
+    logger[level](message);
+  }
 };
+
+logger.exceptions.handle(new winston.transports.Console());
 
 module.exports = logger;
