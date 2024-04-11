@@ -38,28 +38,28 @@ const logger = createLogger({
 // Setting the log level to "silly" so that all log messages are shown
 logger.level = "silly";
 
-logger.log = (level, ...args) => {
-  let message = '';
-  let error;
+// logger.log = (level, ...args) => {
+//   let message = '';
+//   let error;
 
-  args.forEach(arg => {
-    if (arg instanceof Error) {
-      error = arg;
-    } else {
-      if (typeof arg === 'object') {
-        message += JSON.stringify(arg) + ' ';
-      } else {
-        message += arg + ' ';
-      }
-    }
-  });
+//   args.forEach(arg => {
+//     if (arg instanceof Error) {
+//       error = arg;
+//     } else {
+//       if (typeof arg === 'object') {
+//         message += JSON.stringify(arg) + ' ';
+//       } else {
+//         message += arg + ' ';
+//       }
+//     }
+//   });
 
-  if (error) {
-    logger[level](message, error.stack);
-  } else {
-    logger[level](message);
-  }
-};
+//   if (error) {
+//     logger[level](message, error.stack);
+//   } else {
+//     logger[level](message);
+//   }
+// };
 
 logger.exceptions.handle(new winston.transports.Console());
 
